@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>app-common/custom-tools/custom-request-tracer.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CustomError.html">CustomError</a><ul class='methods'><li data-type='method'><a href="CustomError.html#.mergeCodes">mergeCodes</a></li><li data-type='method'><a href="CustomError.html#isException">isException</a></li><li data-type='method'><a href="CustomError.html#isSuccess">isSuccess</a></li></ul></li><li><a href="CustomResult.html">CustomResult</a><ul class='methods'><li data-type='method'><a href="CustomResult.html#isSuccessful">isSuccessful</a></li><li data-type='method'><a href="CustomResult.html#withCode">withCode</a></li><li data-type='method'><a href="CustomResult.html#withMessage">withMessage</a></li><li data-type='method'><a href="CustomResult.html#withResult">withResult</a></li></ul></li><li><a href="CustomUtils.html">CustomUtils</a><ul class='methods'><li data-type='method'><a href="CustomUtils.html#.fromBase64ToString">fromBase64ToString</a></li><li data-type='method'><a href="CustomUtils.html#.fromStringToBase64">fromStringToBase64</a></li><li data-type='method'><a href="CustomUtils.html#.generateComplexRandomString">generateComplexRandomString</a></li><li data-type='method'><a href="CustomUtils.html#.generateRandomNumbers">generateRandomNumbers</a></li><li data-type='method'><a href="CustomUtils.html#.generateRandomString">generateRandomString</a></li><li data-type='method'><a href="CustomUtils.html#.generateUUIDV4">generateUUIDV4</a></li><li data-type='method'><a href="CustomUtils.html#.sleep">sleep</a></li></ul></li><li><a href="CustomValidator.html">CustomValidator</a><ul class='methods'><li data-type='method'><a href="CustomValidator.html#.check">check</a></li><li data-type='method'><a href="CustomValidator.html#.isEqual">isEqual</a></li><li data-type='method'><a href="CustomValidator.html#.isNumber">isNumber</a></li><li data-type='method'><a href="CustomValidator.html#.nonEmptyArray">nonEmptyArray</a></li><li data-type='method'><a href="CustomValidator.html#.nonEmptyString">nonEmptyString</a></li><li data-type='method'><a href="CustomValidator.html#checkThrows">checkThrows</a></li><li data-type='method'><a href="CustomValidator.html#isNumberThrows">isNumberThrows</a></li><li data-type='method'><a href="CustomValidator.html#nonEmptyStringThrows">nonEmptyStringThrows</a></li></ul></li></ul><h3>Global</h3><ul><li><a href="global.html#_expressMiddleware">_expressMiddleware</a></li><li><a href="global.html#_getId">_getId</a></li><li><a href="global.html#_koaMiddleware">_koaMiddleware</a></li><li><a href="global.html#byteToHex">byteToHex</a></li><li><a href="global.html#getOutputLength">getOutputLength</a></li><li><a href="global.html#symlinkPaths">symlinkPaths</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">app-common/custom-tools/custom-request-tracer.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * For Node 10 users:
+ * Node 10.0.x-10.3.x is not supported. That's because V8 version 6.6 introduced a bug
+ * that breaks async_hooks during async/await. Node 10.4.x uses V8 v6.7 where the bug is fixed.
+ * See: https://github.com/nodejs/node/issues/20274.
+ * @private
+ */
+
+const cls = require('cls-hooked');
+const uuid = require('uuid');
+
+const _nameSpaceId = `tracer:${uuid.v4()}`;
+const _nameSpace = cls.createNamespace(_nameSpaceId);
+
+/**
+ * @description Middleware to provide express
+ * @function
+ * @param {Object} options
+ * @param {boolean} [options.useHeader=true] - Save request id to header or not, default to false
+ * @param {string} [options.headerName='X-Request-Id'] - key name to save request id, default is "X-Request-Id"
+ * @returns {function} Stander express middleware function
+ */
+const _expressMiddleware = ({
+  useHeader = true,
+  headerName = 'X-Request-Id',
+} = {}) => (req, res, next) => {
+  _nameSpace.bindEmitter(req);
+  _nameSpace.bindEmitter(res);
+
+  let requestId;
+  if (useHeader) {
+    requestId = req.headers[headerName.toLowerCase()];
+  }
+  requestId = requestId || uuid.v4();
+  _nameSpace.run(() => {
+    _nameSpace.set('requestId', requestId);
+    next();
+  });
+};
+/**
+ * @description Middleware to provide to koa
+ * @function
+ * @param {Object} options
+ * @param {boolean} [options.useHeader=true] - Save request id to header or not, default to false
+ * @param {string} [options.headerName='X-Request-Id'] - key name to save request id, default is "X-Request-Id"
+ * @returns {function} Stander koa middleware function
+ */
+const _koaMiddleware = ({
+  useHeader = true,
+  headerName = 'X-Request-Id',
+} = {}) => (ctx, next) => {
+  _nameSpace.bindEmitter(ctx.req);
+  _nameSpace.bindEmitter(ctx.res);
+
+  let requestId;
+  if (useHeader) {
+    requestId = ctx.request.headers[headerName.toLowerCase()];
+  }
+  requestId = requestId || uuid.v4();
+
+  return new Promise((res, rej) => {
+    _nameSpace.set('requestId', requestId);
+    return next().then(res).catch(rej);
+  });
+};
+/**
+ * @description Get tracer id
+ * @function
+ * @returns {string} An unique id of each request
+ */
+const _getId = () => {
+  if (_nameSpace &amp;&amp; _nameSpace.active) {
+    return _nameSpace.get('requestId');
+  }
+  return '';
+};
+
+module.exports = {
+  forExpress: _expressMiddleware,
+  forKoa: _koaMiddleware,
+  getId: _getId,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Mon Nov 23 2020 12:51:27 GMT+0800 (GMT+08:00) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

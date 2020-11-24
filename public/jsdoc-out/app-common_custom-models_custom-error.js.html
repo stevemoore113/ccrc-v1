@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>app-common/custom-models/custom-error.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CustomError.html">CustomError</a><ul class='methods'><li data-type='method'><a href="CustomError.html#.mergeCodes">mergeCodes</a></li><li data-type='method'><a href="CustomError.html#isException">isException</a></li><li data-type='method'><a href="CustomError.html#isSuccess">isSuccess</a></li></ul></li><li><a href="CustomResult.html">CustomResult</a><ul class='methods'><li data-type='method'><a href="CustomResult.html#isSuccessful">isSuccessful</a></li><li data-type='method'><a href="CustomResult.html#withCode">withCode</a></li><li data-type='method'><a href="CustomResult.html#withMessage">withMessage</a></li><li data-type='method'><a href="CustomResult.html#withResult">withResult</a></li></ul></li><li><a href="CustomUtils.html">CustomUtils</a><ul class='methods'><li data-type='method'><a href="CustomUtils.html#.fromBase64ToString">fromBase64ToString</a></li><li data-type='method'><a href="CustomUtils.html#.fromStringToBase64">fromStringToBase64</a></li><li data-type='method'><a href="CustomUtils.html#.generateComplexRandomString">generateComplexRandomString</a></li><li data-type='method'><a href="CustomUtils.html#.generateRandomNumbers">generateRandomNumbers</a></li><li data-type='method'><a href="CustomUtils.html#.generateRandomString">generateRandomString</a></li><li data-type='method'><a href="CustomUtils.html#.generateUUIDV4">generateUUIDV4</a></li><li data-type='method'><a href="CustomUtils.html#.sleep">sleep</a></li></ul></li><li><a href="CustomValidator.html">CustomValidator</a><ul class='methods'><li data-type='method'><a href="CustomValidator.html#.check">check</a></li><li data-type='method'><a href="CustomValidator.html#.isEqual">isEqual</a></li><li data-type='method'><a href="CustomValidator.html#.isNumber">isNumber</a></li><li data-type='method'><a href="CustomValidator.html#.nonEmptyArray">nonEmptyArray</a></li><li data-type='method'><a href="CustomValidator.html#.nonEmptyString">nonEmptyString</a></li><li data-type='method'><a href="CustomValidator.html#checkThrows">checkThrows</a></li><li data-type='method'><a href="CustomValidator.html#isNumberThrows">isNumberThrows</a></li><li data-type='method'><a href="CustomValidator.html#nonEmptyStringThrows">nonEmptyStringThrows</a></li></ul></li></ul><h3>Global</h3><ul><li><a href="global.html#byteToHex">byteToHex</a></li><li><a href="global.html#getOutputLength">getOutputLength</a></li><li><a href="global.html#symlinkPaths">symlinkPaths</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">app-common/custom-models/custom-error.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const cmmErr = require('../custom-codes/error-codes');
+
+const _errorCodeFields = ['alias', 'code', 'httpStatus', 'message'];
+/**
+ * @description Validate input error code object valid
+ * @private
+ * @param {errorCodeObject} errorMap
+ * @returns {boolean} boolean
+ */
+function _validateErrorCodeFormat(errorMap = {}) {
+  if (!errorMap) {
+    return false;
+  }
+  const keys = Object.keys(errorMap);
+  if (keys.length === 0 || keys.length !== 4) {
+    return false;
+  }
+  for (const k of keys) {
+    if (!_errorCodeFields.includes(k)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * @private
+ * @type {Map.&lt;string, errorCodeObject>}
+ */
+const _codeMap = new Map()
+  .set(cmmErr.SUCCESS, {
+    alias: cmmErr.SUCCESS,
+    code: 0,
+    httpStatus: 200,
+    message: 'Success',
+  })
+  .set(cmmErr.ERR_EXEC_DB_FAIL, {
+    alias: cmmErr.ERR_EXEC_DB_FAIL,
+    code: 90001,
+    httpStatus: 500,
+    message: 'Database execution fail',
+  })
+  .set(cmmErr.ERR_JSON_FORMAT_FAIL, {
+    alias: cmmErr.ERR_JSON_FORMAT_FAIL,
+    code: 90002,
+    httpStatus: 400,
+    message: 'Invalid json format',
+  })
+  .set(cmmErr.ERR_DEPRECATED, {
+    alias: cmmErr.ERR_DEPRECATED,
+    code: 90003,
+    httpStatus: 410,
+    message: 'Depecated resources',
+  })
+  .set(cmmErr.ERR_NOT_IMPLEMENT, {
+    alias: cmmErr.ERR_NOT_IMPLEMENT,
+    code: 90004,
+    httpStatus: 501,
+    message: 'Not implemented',
+  })
+  .set(cmmErr.ERR_EXCEPTION, {
+    alias: cmmErr.ERR_EXCEPTION,
+    code: 99999,
+    httpStatus: 500,
+    message: 'Ops! Exception',
+  });
+
+/**
+ * @class
+ * @classdesc Describe custom error
+ * @extends Error
+ */
+class CustomError extends Error {
+  /**
+   * @constructor
+   * @param {string} codeType
+   * @param {string} replaceString
+   */
+  constructor(codeType, replaceString) {
+    super();
+    let err = _codeMap.get(codeType);
+    if (!err) {
+      err = {
+        alias: cmmErr.ERR_EXCEPTION,
+        httpStatus: 500,
+        code: 99999,
+        message: codeType || 'Ops! Exception',
+      };
+    }
+    this.type = err.code !== 99999 ? codeType : cmmErr.ERR_EXCEPTION;
+    this.code = err.code;
+    this.message = replaceString || err.message;
+    this.name = this.constructor.name;
+    this.httpStatus = err.httpStatus;
+  }
+
+  /**
+   * @description Check if code is success(0)
+   * @returns {boolean} boolean
+   */
+  isSuccess() {
+    return Object.is(0, this.code);
+  }
+
+  /**
+   * @description Check if code is exception(99999)
+   * @returns {boolean} boolean
+   */
+  isException() {
+    return Object.is(99999, this.code);
+  }
+
+  /**
+   * @static
+   * @description Merge error codes
+   * @param {Array.&lt;errorCodeObject>} codes
+   * @returns {void} void
+   * @throws {Error} error
+   */
+  static mergeCodes(codes) {
+    if (!Array.isArray(codes) || codes.length === 0) {
+      throw new Error('Cannot merge with an empty array');
+    }
+    for (const c of codes) {
+      if (!_validateErrorCodeFormat(c)) {
+        throw new Error('Illegal error code format');
+      }
+      if (_codeMap.has(c.alias)) {
+        throw new Error(`Duplicate key ${c.alias} was defined`);
+      }
+      _codeMap.set(c.alias, c);
+    }
+  }
+}
+
+module.exports = CustomError;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Mon Nov 23 2020 12:55:39 GMT+0800 (GMT+08:00) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

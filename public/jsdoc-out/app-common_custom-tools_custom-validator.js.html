@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>app-common/custom-tools/custom-validator.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CustomError.html">CustomError</a><ul class='methods'><li data-type='method'><a href="CustomError.html#.mergeCodes">mergeCodes</a></li><li data-type='method'><a href="CustomError.html#isException">isException</a></li><li data-type='method'><a href="CustomError.html#isSuccess">isSuccess</a></li></ul></li><li><a href="CustomResult.html">CustomResult</a><ul class='methods'><li data-type='method'><a href="CustomResult.html#isSuccessful">isSuccessful</a></li><li data-type='method'><a href="CustomResult.html#withCode">withCode</a></li><li data-type='method'><a href="CustomResult.html#withMessage">withMessage</a></li><li data-type='method'><a href="CustomResult.html#withResult">withResult</a></li></ul></li><li><a href="CustomUtils.html">CustomUtils</a><ul class='methods'><li data-type='method'><a href="CustomUtils.html#.fromBase64ToString">fromBase64ToString</a></li><li data-type='method'><a href="CustomUtils.html#.fromStringToBase64">fromStringToBase64</a></li><li data-type='method'><a href="CustomUtils.html#.generateComplexRandomString">generateComplexRandomString</a></li><li data-type='method'><a href="CustomUtils.html#.generateRandomNumbers">generateRandomNumbers</a></li><li data-type='method'><a href="CustomUtils.html#.generateRandomString">generateRandomString</a></li><li data-type='method'><a href="CustomUtils.html#.generateUUIDV4">generateUUIDV4</a></li><li data-type='method'><a href="CustomUtils.html#.sleep">sleep</a></li></ul></li><li><a href="CustomValidator.html">CustomValidator</a><ul class='methods'><li data-type='method'><a href="CustomValidator.html#.check">check</a></li><li data-type='method'><a href="CustomValidator.html#.isEqual">isEqual</a></li><li data-type='method'><a href="CustomValidator.html#.isNumber">isNumber</a></li><li data-type='method'><a href="CustomValidator.html#.nonEmptyArray">nonEmptyArray</a></li><li data-type='method'><a href="CustomValidator.html#.nonEmptyString">nonEmptyString</a></li><li data-type='method'><a href="CustomValidator.html#checkThrows">checkThrows</a></li><li data-type='method'><a href="CustomValidator.html#isNumberThrows">isNumberThrows</a></li><li data-type='method'><a href="CustomValidator.html#nonEmptyStringThrows">nonEmptyStringThrows</a></li></ul></li></ul><h3>Global</h3><ul><li><a href="global.html#byteToHex">byteToHex</a></li><li><a href="global.html#getOutputLength">getOutputLength</a></li><li><a href="global.html#symlinkPaths">symlinkPaths</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">app-common/custom-tools/custom-validator.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const _validator = require('validator').default;
+const _deepEqual = require('deep-equal');
+const CustomError = require('../custom-models/custom-error');
+
+const _namesEnum = {
+  NON_EMPTY_STRING: 'isNonEmptyString',
+  NON_EMPTY_ARRAY: 'isNonEmptyArray',
+  IS_EMAIL: 'isEmail',
+  IS_BOOL: 'isBoolean',
+  IS_DATE: 'isDate',
+  IS_BEFORE: 'isBefore',
+  IS_NUM: 'isNumber',
+};
+
+/**
+ * @private
+ * @function
+ * @description Validate if input string is empty
+ * @param {string} val
+ * @returns {boolean} boolean
+ */
+function _nonEmptyString(val) {
+  if (!val || typeof val !== 'string') {
+    return false;
+  }
+  return !_validator.isEmpty(val);
+}
+
+/**
+ * @private
+ * @function
+ * @description Validate is input array is empty
+ * @param {Object[]} val
+ * @returns {boolean} boolean
+ */
+function _nonEmptyArray(val) {
+  return val
+    &amp;&amp; Array.isArray(val)
+    &amp;&amp; val.length > 0;
+}
+/**
+ * @private
+ * @function
+ * @description Validate input value to be number
+ * @param {object} num
+ * @returns {boolean} boolean
+ */
+function _isNumber(num) {
+  return typeof num === 'number';
+}
+
+const _strategies = new Map()
+  .set(_namesEnum.NON_EMPTY_STRING, _nonEmptyString)
+  .set(_namesEnum.NON_EMPTY_ARRAY, _nonEmptyArray)
+  .set(_namesEnum.IS_EMAIL, _validator.isEmail)
+  .set(_namesEnum.IS_BOOL, _validator.isBoolean)
+  .set(_namesEnum.IS_DATE, _validator.toDate)
+  .set(_namesEnum.IS_NUM, _isNumber)
+  .set(_namesEnum.IS_BEFORE, _validator.isBefore);
+
+/**
+ * @class
+ * @classdesc Describe custom validator
+ */
+class CustomValidator {
+  /**
+  * @static
+  * @property {Object} strategies
+  * @description Get strategy enum
+  */
+  static get strategies() {
+    return _namesEnum;
+  }
+
+  /**
+   * @static
+   * @property {Object} strings
+   * @description All string validators
+   */
+  static get strings() {
+    return _validator;
+  }
+
+  /**
+   * @description Check if input value is valid, accept multiple rules
+   * @method
+   * @param {any} val - Input value
+   * @param {Object[]} rules - Defined rules
+   * @param {string} rules[].s - Name of strategy for validating input value
+   * @param {string} rules[].m - Error message when validate fail
+   * @param {function} rules[].fn - Custom validate function, piority is higher than s
+   * @returns {CustomValidator} CustomValidator
+   * @throws {CustomError} Throws error if validating is not pass
+   */
+  checkThrows(val, ...rules) {
+    for (const rule of rules) {
+      if (rule.fn &amp;&amp; typeof rule.fn === 'function') {
+        const result = rule.fn(val);
+        if (!result) {
+          throw new CustomError(rule.m);
+        }
+        continue;
+      }
+      const s = _strategies.get(rule.s);
+      if (!s) {
+        throw new CustomError(null, `${rule.s} checker is not defined`);
+      }
+      const result = s(val);
+      if (!result) {
+        throw new CustomError(rule.m);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * @description Check if input string being empty
+   * @method
+   * @param {string} val
+   * @param {string} message
+   * @returns {CustomValidator} CustomValidator
+   * @throws {CustomError} Throws error if validating is not pass
+   */
+  nonEmptyStringThrows(val = '', message = '') {
+    if (!_nonEmptyString(val)) {
+      throw new CustomError(message);
+    }
+    return this;
+  }
+
+  /**
+   * @description Check if input value is number
+   * @method
+   * @param {number} val
+   * @param {string} message
+   * @returns {CustomValidator} CustomValidator
+   * @throws {CustomError} Throws error if validating is not pass
+   */
+  isNumberThrows(val = 0, message = '') {
+    if (!_isNumber(val)) {
+      throw new CustomError(message);
+    }
+    return this;
+  }
+
+  /**
+   * @description Check if input value is valid, only accept one rule
+   * @static
+   * @param {any} val - Input value
+   * @param {Object} rule - Defined rule
+   * @param {string} rule.s - Name of strategy for validating input value
+   * @param {string} rule.m - Error message when validate fail
+   * @param {function} rule.fn - Custom validate function, piority is higher than s
+   * @returns {boolean} boolean
+   * @throws {CustomError} Throws error if strategy not found
+   */
+  static check(val, rule) {
+    if (rule.fn &amp;&amp; typeof rule.fn === 'function') {
+      const result = rule.fn(val);
+      if (!result &amp;&amp; _nonEmptyString(rule.m)) {
+        throw new CustomError(rule.m);
+      }
+      return result;
+    }
+    const s = _strategies.get(rule.s);
+    if (!s) {
+      throw new CustomError(null, `${rule.s} checker is not defined`);
+    }
+    const sResult = s(val);
+    if (!sResult &amp;&amp; _nonEmptyString(rule.m)) {
+      throw new CustomError(rule.m);
+    }
+    return sResult;
+  }
+
+  /**
+   * @description Validate if input string is not empty string
+   * @static
+   * @param {string} val - Input value
+   * @param {string} [message=''] - Message while checking fail
+   * @returns {boolean} boolean
+   * @throws {CustomError} Throws error when message is not empty
+   */
+  static nonEmptyString(val, message = '') {
+    const result = _nonEmptyString(val);
+    if (!result &amp;&amp; _nonEmptyString(message)) {
+      throw new CustomError(message);
+    }
+    return result;
+  }
+
+  /**
+   * @description Validate if input value is not empty array
+   * @static
+   * @param {Object[]} val - Input value
+   * @param {string} [message=''] - Message while checking fail
+   * @returns {boolean} boolean
+   * @throws {CustomError} Throws error when message is not empty
+   */
+  static nonEmptyArray(val, message) {
+    const result = _nonEmptyArray(val);
+    if (!result &amp;&amp; _nonEmptyString(message)) {
+      throw new CustomError(message);
+    }
+    return result;
+  }
+
+  /**
+   * @description Validate if input value is a number
+   * @static
+   * @param {number} val - Input value
+   * @param {string} [message=''] - Message while checking fail
+   * @returns {boolean} boolean
+   * @throws {CustomError} Throws error when message is not empty
+   * @memberof CustomValidator
+   */
+  static isNumber(val, message) {
+    const result = _isNumber(val);
+    if (!result &amp;&amp; _nonEmptyString(message)) {
+      throw new CustomError(message);
+    }
+    return result;
+  }
+
+  /**
+   * @description Validate if two objects being equal
+   * @static
+   * @method
+   * @param {object} var1
+   * @param {object} var2
+   * @param {string} [message=''] - Message while checking fail
+   * @returns {boolean} boolean
+   * @throws {CustomError} Throws error when message is not empty
+   */
+  static isEqual(var1, var2, message) {
+    const result = _deepEqual(var1, var2);
+    if (!result &amp;&amp; _nonEmptyString(message)) {
+      throw new CustomError(message);
+    }
+    return result;
+  }
+}
+
+module.exports = CustomValidator;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Mon Nov 23 2020 12:55:39 GMT+0800 (GMT+08:00) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

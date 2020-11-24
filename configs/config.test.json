@@ -1,0 +1,11 @@
+{
+  "DATABASES": {
+    "DEFAULT_MONGO": {
+      "URI": "mongodb://localhost:27017/ccrc_test",
+      "USER": "ccrc",
+      "PASS": "ccrc!User",
+      "POOL_SIZE": 10,
+      "DB_NAME": "ccrc_test"
+    }
+  }
+}
